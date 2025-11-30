@@ -1,0 +1,234 @@
+%========================= expm1-report.tex =========================
+\documentclass[a4paper,11pt]{article}
+
+% ---------- Encoding & typography ----------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[stretch=10]{microtype}
+\usepackage{parskip} % no indents, space between paragraphs
+
+% ---------- Math & units ----------
+\usepackage{amsmath, amssymb, mathtools, bm}
+\usepackage{siunitx}
+\sisetup{detect-all=true}
+
+% ---------- Graphics & floats ----------
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+
+% ---------- Links & references ----------
+\usepackage[hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise]{cleveref}
+
+% ---------- Code (choose ONE of the two) ----------
+% Option A: minted (better highlighting) — compile with: -shell-escape
+\usepackage[cache=false]{minted}
+\setminted{
+  fontsize=\small,
+  breaklines=true,
+  autogobble=true,
+  frame=lines,
+  framesep=2mm
+}
+
+% % Option B: listings (no shell-escape required)
+% \usepackage{listings}
+% \lstset{
+%   language=Python,
+%   basicstyle=\ttfamily\small,
+%   numbers=left,
+%   numbersep=6pt,
+%   breaklines=true,
+%   frame=lines
+% }
+
+% ---------- Page layout ----------
+\usepackage[margin=1in]{geometry}
+
+% ---------- Handy macros ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\abs}[1]{\left|#1\right|}
+\DeclareMathOperator{\expmone}{expm1}
+
+\title{Numerical Instability Caused by Cancellation}
+\author{Group 2 - Ferschl Martin, Laktaoui Mohammed, Reiter Roman, Zenkic Mirza}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+% \begin{abstract}
+% We study the numerical evaluation of \(f(x)=\exp(x)-1\) for very small \(\abs{x}\).
+% We compare the direct evaluation in double precision against a truncated Taylor
+% series about \(x=0\) and visualize the relative error on a logarithmic scale.
+% We explain the loss of accuracy due to catastrophic cancellation and give a
+% stable alternative.
+% \end{abstract}
+
+\section{Task specification}
+We aim to evaluate the function
+\[
+  f(x) = \exp(x) - 1 % , \qquad 0 < \abs{x} \ll 1,
+\]
+on a computer (in double precision arithmetic) for very small values of |x|,
+i.e., 0 < |x| \(\ll\) 1.
+
+\quad{1. Experiment on the computer using double precision arithmetic (you
+may assume that the exp function is implemented correctly in double
+precision). Choose x = \( x = 10^{-k} \), k = 1, 2, 3, 4, 5,...
+For comparison, you can obtain an “almost exact” value of the function
+f using the Taylor expansion of exp(x) about x = 0, for example, up
+to the 10th degree (this is a brute-force method).
+For comparison of the results, plot the relative error between the two
+evaluation methods on a logarithmic scale.}
+
+\quad 2. By comparing the two methods, you will see that the direct evaluation
+of f (x) in its given form is numerically unstable, i.e., it yields very
+inaccurate results for |x| → 0. Can you explain this observation?
+
+% on a computer using double precision arithmetic. We perform experiments for
+% \(x=10^{-k}\) with \(k=1,2,\dots\), compare to an ``almost exact'' value
+% obtained from the Taylor expansion of \(\exp(x)\) about \(0\) (degree \(10\)),
+% and plot the relative error between both evaluations on a logarithmic scale.
+
+\section{Method}
+Using the Taylor expansion,
+\[
+  \exp(x) = \sum_{n=0}^{\infty}\frac{x^n}{n!}
+  \quad\Rightarrow\quad
+  \exp(x)-1 = \sum_{n=1}^{\infty}\frac{x^n}{n!}
+  \approx \sum_{n=1}^{N}\frac{x^n}{n!},
+\]
+we adopt \(N=10\) terms as the reference (\emph{brute-force}) value for small \(x\).
+The relative error we report is
+\[
+  \mathrm{rel.\ error}
+  = \frac{\abs{f_{\mathrm{direct}}(x) - f_{\mathrm{ref}}(x)}}{\abs{f_{\mathrm{ref}}(x)}}.
+\]
+
+\newpage
+\section{Implementation}
+Below is the Python code used to generate the numerical results and the plot.
+It computes the direct value \(\exp(x)-1\), the Taylor reference, prints a table,
+and saves the figure as \texttt{relative\_error.png}.
+
+% ---------- If using minted ----------
+\begin{minted}{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+def taylor_exp_minus_one(x, n_terms=10):
+    x = np.array(x, dtype=np.float64)
+    s = np.zeros_like(x)
+    term = None
+    for k in range(1, n_terms + 1):
+        term = x if k == 1 else term * x / k
+        s += term
+    return s
+
+# x = 10^-k, k = 1..15
+k_vals = np.arange(1, 16)
+x = 10.0 ** (-k_vals)
+
+f_direct = np.exp(x) - 1.0
+f_ref = taylor_exp_minus_one(x, n_terms=10)
+rel_err = np.abs(f_direct - f_ref) / np.abs(f_ref)
+
+print("  k       x         direct         taylor         rel. error")
+for k, xv, fd, ft, err in zip(k_vals, x, f_direct, f_ref, rel_err):
+    print(f"{k:3d}  {xv:8.1e}  {fd: .3e}  {ft: .3e}  {err: .3e}")
+
+plt.figure()
+plt.loglog(x, rel_err, "o-")
+plt.gca().invert_xaxis()
+plt.xlabel(r"$x = 10^{-k}$")
+plt.ylabel(r"relative error")
+plt.title(r"Relative error of $\exp(x)-1$ vs Taylor reference")
+plt.grid(True, which="both", ls="--")
+plt.tight_layout()
+plt.savefig("relative_error.png", dpi=200)
+plt.close()
+\end{minted}
+
+% % ---------- If using listings, replace the minted block above with:
+% \begin{lstlisting}
+% # (same Python code as above)
+% \end{lstlisting}
+
+\section{Results}
+\subsection{Numerical table}
+\Cref{tab:nums} shows a sample of the numerical results for representative \(k\)
+(Values are produced by the Python script).
+
+\begin{table}[h]
+  \centering
+  \caption{Direct evaluation vs.\ Taylor reference for $x=10^{-k}$.}
+  \label{tab:nums}
+  \sisetup{table-number-alignment=center,round-mode=places,round-precision=3}
+  \begin{tabular}{@{}r
+                  S[table-format=1.1e-2]
+                  S[table-format=1.3e-2]
+                  S[table-format=1.3e-2]
+                  S[table-format=1.3e-2]@{}}
+    \toprule
+    {$k$} & {$x$} & {direct} & {Taylor ref.} & {rel.\ error} \\
+    \midrule
+     1 & 1.0e-01 & 1.052e-01 & 1.052e-01 & 7.917e-16 \\
+     2 & 1.0e-02 & 1.005e-02 & 1.005e-02 & 1.087e-14 \\
+     3 & 1.0e-03 & 1.001e-03 & 1.001e-03 & 4.291e-14 \\
+     4 & 1.0e-04 & 1.000e-04 & 1.000e-04 & 4.327e-13 \\
+     5 & 1.0e-05 & 1.000e-05 & 1.000e-05 & 9.702e-12 \\
+     6 & 1.0e-06 & 1.000e-06 & 1.000e-06 & 3.798e-11 \\
+     7 & 1.0e-07 & 1.000e-07 & 1.000e-07 & 5.663e-10 \\
+     8 & 1.0e-08 & 1.000e-08 & 1.000e-08 & 1.108e-08 \\
+     9 & 1.0e-09 & 1.000e-09 & 1.000e-09 & 8.224e-08 \\
+    10 & 1.0e-10 & 1.000e-10 & 1.000e-10 & 8.269e-08 \\
+    11 & 1.0e-11 & 1.000e-11 & 1.000e-11 & 8.274e-08 \\
+    12 & 1.0e-12 & 1.000e-12 & 1.000e-12 & 8.890e-05 \\
+    13 & 1.0e-13 & 9.992e-14 & 1.000e-13 & 7.993e-04 \\
+    14 & 1.0e-14 & 9.992e-15 & 1.000e-14 & 7.993e-04 \\
+    15 & 1.0e-15 & 1.110e-15 & 1.000e-15 & 1.102e-01 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Error plot}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\linewidth]{relative_error.png}
+  \caption{Relative error of the direct evaluation \(\exp(x)-1\) against the
+  Taylor reference, for \(x=10^{-k}\). Both axes use logarithmic scaling
+  (the $x$-axis is shown decreasing to the right).}
+  \label{fig:relerr}
+\end{figure}
+
+\section{Discussion}
+For very small \(x\), \(\exp(x)\approx 1 + x + \frac{x^2}{2} + \cdots\).
+The direct subtraction \(\exp(x)-1\) removes the leading \(1\), leaving a result
+dominated by rounding error (catastrophic cancellation). The absolute error is
+on the order of machine epsilon, while the true value is \(\mathcal{O}(x)\),
+so the relative error grows like \(\varepsilon / \abs{x}\) as \(\abs{x}\to 0\).
+For sufficiently small \(x\), \(\exp(x)\) may even round to \(1\), yielding
+a direct result of exactly \(0\).
+
+\section{Conclusion}
+The direct evaluation of \(\exp(x)-1\) is numerically unstable for small \(x\)
+due to cancellation. A stable alternative is to evaluate a series expansion near
+zero or to use a specialized routine such as \verb|expm1(x)| provided by many
+standard libraries.
+
+% (Optional) short references could go here, inline or as a mini list.
+
+% \appendix
+% \section{Taylor polynomial (degree 10)}
+% \[
+%   \exp(x)-1 \approx x + \frac{x^2}{2!} + \frac{x^3}{3!} + \cdots + \frac{x^{10}}{10!}.
+% \]
+
+\end{document}
+%======================= end expm1-report.tex =======================
+
