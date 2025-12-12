@@ -1,0 +1,181 @@
+\documentclass[a4paper,11pt]{article}
+
+% ---------- Encoding & typography ----------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[stretch=10]{microtype}
+\usepackage{parskip} % no indents, space between paragraphs
+
+% ---------- Math & units ----------
+\usepackage{amsmath, amssymb, mathtools, bm}
+\usepackage{siunitx}
+\sisetup{detect-all=true}
+
+% ---------- Graphics & floats ----------
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{float}
+
+% ---------- Links & references ----------
+\usepackage[hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise]{cleveref}
+
+% ---------- Page layout ----------
+\usepackage[margin=1in]{geometry}
+
+% ---------- Handy macros ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\abs}[1]{\left|#1\right|}
+
+\title{Justification of the Gradient Direction (Orthogonality to Level Sets)}
+\author{Group 2 -- Ferschl Martin, Reiter Roman, Zenkic Mirza}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Task specification}
+
+We consider a scalar function
+\[
+  f : \R^2 \to \R, \qquad f(x,y),
+\]
+which is sufficiently smooth (at least continuously differentiable).
+For a fixed value \(c \in \R\), the equation
+\[
+  f(x,y) = c
+\]
+defines a curve in the plane (a \emph{level set} or \emph{contour line} of \(f\)).
+Under suitable regularity assumptions (e.g.\ \(f_x\) and \(f_y\) not both zero on
+the curve), this level set can locally be parameterized as
+\[
+  \bm{x}(t) = 
+  \begin{pmatrix}
+    x(t) \\[0.3em]
+    y(t)
+  \end{pmatrix},
+  \qquad t \in I \subset \R,
+\]
+so that
+\[
+  f(x(t), y(t)) = c \quad \text{for all } t \in I.
+\]
+
+The vector
+\[
+  \bm{x}'(t) =
+  \begin{pmatrix}
+    x'(t) \\[0.3em]
+    y'(t)
+  \end{pmatrix}
+\]
+is the tangent (velocity) vector to the curve at the point
+\(\bm{x}(t) = (x(t),y(t))^\top\). The claim is that the gradient
+\[
+  \nabla f(x,y) =
+  \begin{pmatrix}
+    f_x(x,y) \\[0.3em]
+    f_y(x,y)
+  \end{pmatrix}
+\]
+is orthogonal to this tangent vector at each point on the level curve.
+
+We prove this using the chain rule.
+
+\section{Chain rule argument}
+
+Let \(f(x,y)\) be \(C^1\) (continuously differentiable), and let
+\(\bm{x}(t) = (x(t), y(t))^\top\) be a differentiable parameterization of the
+level set \(f(x,y) = c\). By definition of the level set, we have
+\[
+  f(x(t),y(t)) = c \quad \text{for all } t.
+\]
+We now differentiate this identity with respect to \(t\).
+
+\subsection*{Step 1: Differentiate the composition}
+
+Consider the composite function
+\[
+  g(t) := f(x(t),y(t)).
+\]
+We know that \(g(t) \equiv c\) is constant, hence
+\[
+  g'(t) = 0 \quad \text{for all } t.
+\]
+
+On the other hand, by the (one-dimensional) chain rule applied to the
+composition \(f \circ \bm{x}\), we have
+\[
+  g'(t)
+  = \frac{d}{dt} f\bigl(x(t),y(t)\bigr)
+  = f_x\bigl(x(t),y(t)\bigr) \, x'(t)
+    + f_y\bigl(x(t),y(t)\bigr) \, y'(t),
+\]
+where \(f_x\) and \(f_y\) denote the partial derivatives of \(f\) with respect
+to its first and second argument.
+
+Combining both expressions for \(g'(t)\), we obtain the scalar equation
+\[
+  f_x\bigl(x(t),y(t)\bigr) \, x'(t)
+  + f_y\bigl(x(t),y(t)\bigr) \, y'(t)
+  = 0.
+\]
+
+\subsection*{Step 2: Interpret as a dot product}
+
+We can rewrite this as a dot product of two vectors in \(\R^2\):
+\[
+  \nabla f\bigl(x(t),y(t)\bigr) \cdot \bm{x}'(t)
+  =
+  \begin{pmatrix}
+    f_x(x(t),y(t)) \\[0.3em]
+    f_y(x(t),y(t))
+  \end{pmatrix}
+  \cdot
+  \begin{pmatrix}
+    x'(t) \\[0.3em]
+    y'(t)
+  \end{pmatrix}
+  = 0.
+\]
+Thus, at every point on the level curve where \(\bm{x}'(t) \neq \bm{0}\), we have
+\[
+  \nabla f\bigl(x(t),y(t)\bigr) \cdot \bm{x}'(t) = 0,
+\]
+i.e.\ the gradient vector is orthogonal to the tangent vector.
+
+\section{Geometric interpretation and connection to gradient descent}
+
+The above calculation shows that at any point \((x,y)\) on the level set
+\(f(x,y) = c\), the gradient \(\nabla f(x,y)\) is perpendicular to the level
+curve passing through that point. Equivalently:
+
+\begin{itemize}
+  \item \(\nabla f(x,y)\) points in the direction of \emph{steepest increase}
+        of \(f\).
+  \item \(-\nabla f(x,y)\) points in the direction of \emph{steepest decrease}
+        of \(f\).
+  \item The level curve \(f(x,y) = c\) is locally ``flat'' in the sense that
+        moving along the curve (i.e.\ along \(\bm{x}'(t)\)) leaves the value of
+        \(f\) unchanged; hence there is no component of \(\nabla f\) in the
+        tangential direction, only in the normal direction.
+\end{itemize}
+
+This orthogonality property justifies the gradient descent step used in
+Task~4:
+\[
+  (x_{k+1},y_{k+1})
+  = (x_k,y_k) - \gamma \, \nabla f(x_k,y_k).
+\]
+At each iteration, we move from the current point in the direction
+\(-\nabla f\), i.e.\ orthogonally to the contours of \(f\), in the direction
+of steepest decrease of the function value. For convex functions, this
+iteration can be shown (under suitable step-size conditions) to converge to
+a global minimizer.
+
+\end{document}
+

@@ -1,0 +1,242 @@
+\documentclass[a4paper,11pt]{article}
+
+% ---------- Encoding & typography ----------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[stretch=10]{microtype}
+\usepackage{parskip} % no indents, space between paragraphs
+
+% ---------- Math & units ----------
+\usepackage{amsmath, amssymb, mathtools, bm}
+\usepackage{siunitx}
+\sisetup{detect-all=true}
+
+% ---------- Graphics & floats ----------
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{float}
+
+% ---------- Links & references ----------
+\usepackage[hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise]{cleveref}
+
+% ---------- Code ----------
+\usepackage[cache=false]{minted}
+\setminted{
+  fontsize=\small,
+  breaklines=true,
+  autogobble=true,
+  frame=lines,
+  framesep=2mm
+}
+
+% ---------- Page layout ----------
+\usepackage[margin=1in]{geometry}
+
+% ---------- Handy macros ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\abs}[1]{\left|#1\right|}
+
+\title{Gradient Descent in Three Dimensions: \\ Generalization to \texorpdfstring{$f(x,y,z)$}{f(x,y,z)}}
+\author{Group 2 -- Ferschl Martin, Reiter Roman, Zenkic Mirza}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Task specification}
+
+We generalize the setting of Task~4 to a function of three variables
+\[
+  f : \R^3 \to \R, \qquad f(x,y,z),
+\]
+and consider the simplest convex example
+\[
+  f(x,y,z) = x^2 + y^2 + z^2.
+\]
+This function has a unique global minimum at \((x,y,z) = (0,0,0)\).
+
+The goal is to:
+\begin{itemize}
+  \item describe the geometry of the level sets of \(f\) and the associated
+        gradient vector,
+  \item formulate and justify the gradient descent iteration in \(\R^3\) for
+        this model problem,
+  \item (optionally) implement and test the iteration numerically.
+\end{itemize}
+
+\section{Geometry: level sets and gradient in \texorpdfstring{$\R^3$}{R³}}
+
+For the function
+\[
+  f(x,y,z) = x^2 + y^2 + z^2,
+\]
+the level sets are given by
+\[
+  f(x,y,z) = c
+  \quad \Longleftrightarrow \quad
+  x^2 + y^2 + z^2 = c,
+\]
+for constants \(c \ge 0\). These are spheres in \(\R^3\) with centre at the origin
+and radius \(\sqrt{c}\).
+
+The partial derivatives are
+\[
+  f_x(x,y,z) = 2x, \qquad
+  f_y(x,y,z) = 2y, \qquad
+  f_z(x,y,z) = 2z,
+\]
+so the gradient is
+\[
+  \nabla f(x,y,z)
+  =
+  \begin{pmatrix}
+    2x \\[0.3em]
+    2y \\[0.3em]
+    2z
+  \end{pmatrix}
+  = 2
+  \begin{pmatrix}
+    x \\ y \\ z
+  \end{pmatrix}.
+\]
+
+At a point \((x,y,z)\) on the sphere \(x^2 + y^2 + z^2 = c\), the vector
+\((x,y,z)^\top\) points radially outwards from the origin. Hence
+\(\nabla f(x,y,z) = 2(x,y,z)^\top\) is also radial and orthogonal to the
+tangent plane of the sphere at that point. Thus, in three dimensions, the same
+geometric principle holds as in Task~4: the gradient is normal to the level
+surfaces (here, spheres).
+
+The direction of steepest descent is given by \(-\nabla f(x,y,z)\), which
+points radially inward toward the minimum at \((0,0,0)\).
+
+\section{Gradient descent iteration in \texorpdfstring{$\R^3$}{R³}}
+
+We now consider the gradient descent iteration
+\[
+  \bm{x}_{k+1}
+  = \bm{x}_k - \gamma \, \nabla f(\bm{x}_k),
+\]
+where \(\bm{x}_k = (x_k,y_k,z_k)^\top \in \R^3\) and \(\gamma > 0\) is a step size.
+
+For our model function, the gradient is
+\[
+  \nabla f(x,y,z) = (2x,2y,2z)^\top,
+\]
+so the update reads
+\[
+  \bm{x}_{k+1}
+  = \bm{x}_k - \gamma (2x_k,2y_k,2z_k)^\top
+  = (1 - 2\gamma)\, \bm{x}_k.
+\]
+Written componentwise:
+\[
+  x_{k+1} = (1 - 2\gamma) x_k, \quad
+  y_{k+1} = (1 - 2\gamma) y_k, \quad
+  z_{k+1} = (1 - 2\gamma) z_k.
+\]
+
+By induction, we obtain
+\[
+  \bm{x}_k = (1 - 2\gamma)^k \bm{x}_0.
+\]
+Hence the iterates converge to the minimum \(\bm{0}\) if and only if
+\[
+  \abs{1 - 2\gamma} < 1,
+\]
+i.e.
+\[
+  0 < \gamma < 1.
+\]
+
+As in the two-dimensional case:
+
+\begin{itemize}
+  \item If \(0 < \gamma < \tfrac{1}{2}\), then \(1 - 2\gamma \in (0,1)\). The
+        iterates move monotonically towards the origin without changing
+        direction.
+  \item If \(\tfrac{1}{2} < \gamma < 1\), then \(1 - 2\gamma \in (-1,0)\). The
+        iterates converge to the origin but alternate sign, i.e.\ they
+        ``zigzag'' across the origin.
+  \item If \(\gamma = 1\), then \(1 - 2\gamma = -1\), so \(\bm{x}_k\) alternates
+        between \(\bm{x}_0\) and \(-\bm{x}_0\) and never converges.
+  \item If \(\gamma > 1\), then \(\abs{1 - 2\gamma} > 1\) and the iterates
+        diverge.
+\end{itemize}
+
+Thus, the convergence condition and the qualitative behaviour of the method
+are exactly the same as in \(\R^2\); only the dimension of the vector changes.
+
+\section{Python implementation (optional)}
+
+To illustrate the three-dimensional gradient descent, we can generalize the
+code from Task~4. We now work with vectors in \(\R^3\):
+
+\begin{minted}{python}
+import numpy as np
+
+def f3(x):
+    """
+    Objective function in R^3:
+    f(x, y, z) = x^2 + y^2 + z^2
+    x is a numpy array of shape (3,).
+    """
+    return np.dot(x, x)  # x^T x = x^2 + y^2 + z^2
+
+def grad_f3(x):
+    """Gradient: f(x) = 2x."""
+    return 2.0 * x
+
+def gradient_descent_3d(x0, gamma, n_steps):
+    """
+    Gradient descent in R^3 starting from x0 (shape (3,)),
+    step size gamma, for n_steps iterations.
+    """
+    x = np.array(x0, dtype=float)
+    trajectory = [x.copy()]
+    for k in range(n_steps):
+        g = grad_f3(x)
+        x = x - gamma * g
+        trajectory.append(x.copy())
+    return trajectory
+
+# Example usage
+x0 = np.array([1.0, -1.0, 0.5])
+gamma = 0.25
+n_steps = 10
+
+traj = gradient_descent_3d(x0, gamma, n_steps)
+print("Gradient descent in R^3 with gamma =", gamma)
+for k, xk in enumerate(traj):
+    print(f"k={k:2d}: x = {xk}, f(x) = {f3(xk): .6e}")
+\end{minted}
+
+For \(0 < \gamma < 1\), the sequence \(\bm{x}_k\) converges to the origin and
+the function values \(f(\bm{x}_k)\) decrease to zero, confirming the theoretical
+analysis.
+
+\section{Conclusion}
+
+The generalization of Task~4 from \(\R^2\) to \(\R^3\) is straightforward:
+\begin{itemize}
+  \item For \(f(x,y,z) = x^2 + y^2 + z^2\), the level sets are spheres and the
+        gradient \(\nabla f = (2x,2y,2z)^\top\) points radially outwards,
+        orthogonal to the level surfaces.
+  \item The gradient descent iteration
+        \(\bm{x}_{k+1} = \bm{x}_k - \gamma \nabla f(\bm{x}_k)\)
+        becomes a simple scaling \(\bm{x}_{k+1} = (1 - 2\gamma)\bm{x}_k\).
+  \item Convergence to the unique minimum \(\bm{0}\) occurs if and only if
+        \(0 < \gamma < 1\), with the same interpretation of step-size choices
+        as in the two-dimensional case.
+\end{itemize}
+
+This simple example illustrates that the core ideas of gradient descent extend
+naturally from two to higher dimensions.
+
+\end{document}
+
